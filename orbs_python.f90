@@ -71,7 +71,7 @@ end subroutine
 subroutine get_atom_infoFrom(filename, maxii, nn, ll, jj, qq, hgrid, ns) 
 implicit none 
 integer                                         :: i,k
-integer                                         :: ns
+integer, intent(out)                            :: ns
 integer, parameter                              :: nsmax = 200
 real(8)                                         :: tmp(2*maxii)
 integer, intent(in)                             :: maxii
