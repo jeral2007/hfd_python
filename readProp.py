@@ -43,20 +43,22 @@ def read_prop(fil):
     state = MAT
     return {title: (size, dens, mat)}
 
+def __test__():
+    props = {}
+    prop = {}
+    with open('prop.txt', 'r') as props_file:
+        while (True):
+            prop = read_prop(props_file)
+            try:
+                props.update(prop)
+            except TypeError:
+                break
 
-props = {}
-prop = {}
-with open('prop.txt', 'r') as props_file:
-    while (True):
-        prop = read_prop(props_file)
-        try:
-            props.update(prop)
-        except TypeError:
-            break
+    for prop_name in props:
+        print(prop_name)
+        print(" ".join(['{:3.5f}'] * props[prop_name][0]).format(
+            *props[prop_name][2].diagonal()))
+        print("---------------")
 
-for prop_name in props:
-    print(prop_name)
-    print(" ".join(['{:3.5f}'] * props[prop_name][0]).format(
-        *props[prop_name][2].diagonal()))
-    print("---------------")
-
+if __name__ == "__main__":
+    __test__()
