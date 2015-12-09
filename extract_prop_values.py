@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
-import os, sys
+import os
+import sys
 import os.path
-import math
+import datetime
+from propdb import *
 
 
 def get_prop_val(filename):
@@ -32,13 +34,43 @@ def get_prop_val(filename):
             return (prop_name, float(reval))
 
 
-pathname = sys.argv[1]
-name = sys.argv[2]
-props = {'comp_name': name}
-for filename in filter(os.path.isfile, os.listdir(pathname)):
-    res = get_prop_val(pathname+'/'+filename)
-    if res is not None:
-        assert(res[0] not in props)
-        props[res[0]] = res[1]
+def get_props_from_dir(pathname, name):
+    props = {}
+    for filename in filter(lambda t: os.path.isfile(pathname+'/'+t),
+                           os.listdir(pathname)):
+        res = get_prop_val(pathname+'/'+filename)
+        if res is not None:
+            assert(res[0] not in props)
+            props[res[0]] = res[1]
+    return props
 
-print props
+
+def prop_as_tsv(props):
+    res = '\n'.join(['{}\t{}'.format(pn, pv) for pn, pv in props.iteritems()
+                    if pn != 'comp_name'])
+    return res
+
+
+initdb('props.db')
+pathname = sys.argv[1]
+name = sys.argv[2].upper()
+current_time = datetime.datetime.strftime(datetime.datetime.now(),
+                                          '%Y-%m-%d %H:%M')
+print(current_time)
+props = get_props_from_dir(pathname, name)
+print (prop_as_tsv(props))
+comps = get_comps()
+print(comps)
+comp_names = [comp[1] for comp in comps]
+
+if name not in comp_names:
+    comp_id = add_comp(name, current_time)
+else:
+    raise KeyError
+print("---------")
+
+for pn, pv in props.iteritems():
+    prop_id = get_prop_id(pn)
+    if prop_id is None:
+        prop_id = add_prop(pn)
+    add_propval(prop_id, comp_id, str(pv))
