@@ -1,3 +1,26 @@
+# coding: utf-8
+__doc__ = u"""
+# hfd_in_out
+набор функций для работы с hfd.inp и hfd.res
+##список функций
+- hfd_inp
+- orbitals
+## hfd_inp
+преобразует шаблон для файла _hfd.inp_, сканируя его и подставляя
+вместо !val! соответствующее значение. Так например вызов hfd_inp(ins, q="1.")
+заменит все вхождения строки !q! в потоке ins на 1.
+
+*вызов*: hfd_inp(in_stream, \*\*kwargs)
+- in_stream -- поток с шаблоном входного файла hfd.inp
+- **kwargs -- список ключевых аргументов для подстановки в шаблон.
+## orbitals
+читает входной поток в формате hfd.res и возвращает кортеж из
+словаря с информацией о
+орбиталях и значением полной энергии атома.
+*вызов*: orbs, en = orbitals(in_stream)
+"""
+
+
 def hfd_inp(in_stream, **kwargs):
     with open('hfd.inp', 'w') as hfdinp:
         for line in in_stream:
