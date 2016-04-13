@@ -3,16 +3,16 @@
 import sys
 import hfd_in_out
 
-def data_shell(orbs, shells):
-    for shell in shells:
-        nl, j = shell[0:2], shell[2:]
-        for orb in orbs:
-            if orb['nl'] == nl and orb['j'] == j:
-                yield orb
-
+def data_shell(orbs):
+    return [orb for orb in orbs if orb['kp'] <0.5 #unfrozen shells only
 
 hfdres, shells = sys.argv[1], sys.argv[2:]
 orbs, en = hfd_in_out.orbitals(open(hfdres, 'r'))
+
+unfrozen = data_shell(orbs)
+print len(unfrozen)
+
 for data in data_shell(orbs, shells):
     print("{}{}\t{}".format(data['nl'], data['j'],
                             str(data['en']).replace('.', ',')))
+print(en)

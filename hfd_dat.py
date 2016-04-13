@@ -1,6 +1,11 @@
 import orbs_python as o
 import scipy as sc
+__doc__ = """
+## hfd.dat
 
+модуль для работы с hfd.dat файлами
+Содержит класс Hfd()
+"""
 
 def _isdigit_(c):
     return c in '0123456789'
