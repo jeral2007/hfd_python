@@ -11,20 +11,20 @@ def coulumb(a, b, grid, end_point=-1):
     abc, asc, al, aj = a  # radial and angular for a
     bbc, bsc, bl, bj = b  # radial and angular for b
     ro, w, h = grid  # radial grid and weights
-    end_ind = end_point < 0 and len(ro) or (sc.where(ro > end_point)[0][0])
-    ro = ro[:end_ind]
-    w = w[:end_ind]
-    abc = abc[:end_ind]
-    asc = asc[:end_ind]
-    bbc = bbc[:end_ind]
-    bsc = bsc[:end_ind]
-    bdens = bbc**2 + bsc**2
-    inner = 1./ro*cumtrapz(bdens*w, initial=0e0)*h
-    outer = cumtrapz(bdens/ro*w, initial=0e0)*h
+    end_ind = end_point < 0 and len(ro) or (sc.where(ro > end_point)[0][0]+1)
+    cro = ro[:end_ind]
+    cw = w[:end_ind]
+    cabc = abc[:end_ind]
+    casc = asc[:end_ind]
+    cbbc = bbc[:end_ind]
+    cbsc = bsc[:end_ind]
+    bdens = cbbc**2 + cbsc**2
+    inner = 1./cro*cumtrapz(bdens*cw, initial=0e0)*h
+    outer = cumtrapz(bdens/cro*cw, initial=0e0)*h
     outer = outer[-1] - outer  # внешнее интегрирование от r до бесконечности
-    adens = abc**2 + asc**2
-    res = sc.trapz(adens*(inner+outer)*w)*h
-    return res*w3js0[(aj, aj, 0)]*w3js0[(bj, bj, 0)]
+    adens = cabc**2 + casc**2
+    res = sc.trapz(adens*(inner+outer)*cw)*h
+    return res
 
 
 def exchange(a, b, grid, end_point=-1):
@@ -32,30 +32,29 @@ def exchange(a, b, grid, end_point=-1):
     bbc, bsc, bl, bj = b  # radial and angular for b
     jmax, jmin = max(aj, bj), min(aj, bj)
     ro, w, h = grid  # radial grid and weights
-    end_ind = end_point < 0 and len(ro) or (sc.where(ro > end_point)[0][0])
-    abc = abc[:end_ind]
-    asc = asc[:end_ind]
-    bbc = bbc[:end_ind]
-    bsc = bsc[:end_ind]
-    ro = ro[:end_ind]
-    w = w[:end_ind]
+    end_ind = end_point < 0 and len(ro) or (sc.where(ro > end_point)[0][0]+1)
+    cabc = abc[:end_ind]
+    casc = asc[:end_ind]
+    cbbc = bbc[:end_ind]
+    cbsc = bsc[:end_ind]
+    cro = ro[:end_ind]
+    cw = w[:end_ind]
     k = jmax - jmin
     if (k+al+bl) % 2 != 0:
         k += 1
-    dens0 = abc*bbc+asc*bsc
+    dens0 = cabc*cbbc+casc*cbsc
 
-    dens_kg = dens0/ro**(k+1)
-    dens_kl = dens0*ro**k
+    dens_kg = dens0/cro**(k+1)
+    dens_kl = dens0*cro**k
     res = 0e0
     while (k <= (jmax+jmin)):
-        dens_g_int = cumtrapz(dens_kg*w, initial=0e0)*h
+        dens_g_int = cumtrapz(dens_kg*cw, initial=0e0)*h
         # внешнее интегрирование от r до бесконечности
         dens_g_int = dens_g_int[-1] - dens_g_int
-        dens_l_int = cumtrapz(dens_kl*w, initial=0e0)*h
-        res_k = sc.trapz((dens_kg*dens_l_int+dens_kl*dens_g_int)*w)*h
-        res += res_k*w3js0[(jmax, jmin, k)]**2
+        dens_l_int = cumtrapz(dens_kl*cw, initial=0e0)*h
+        res_k = sc.trapz((dens_kg*dens_l_int+dens_kl*dens_g_int)*cw)*h
+        res += res_k*w3js0[(jmax, jmin, k)]
         k += 2
-        dens_kg = dens_kg/ro**2
-        dens_kl = dens_kl*ro**2
+        dens_kg = dens_kg/cro**2
+        dens_kl = dens_kl*cro**2
     return res
-
