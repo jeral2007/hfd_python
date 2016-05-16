@@ -136,3 +136,27 @@ Methods and Variables:
         def integrate(func_vals):
             return sc.trapz(func_vals, self.grid)
         return integrate
+
+
+def _get_nc(rc, r):
+    if rc >= r[-1]:
+        return -1
+    else:
+        return sc.where(rc<r)[0][0]+1
+
+def gr_trapz(f, hfd, rc=1e15):
+    """ Интегрирование на сетке заданной в hfd.dat
+
+### Аргументы
+- f - numpy-1d массив содержащий значения функции на сетке
+- rc=1e15 - верхний предел интеграла
+- hfd - экземпляр Hfd, hfd.grid - узлы сетки, hfd.weights - веса в них
+
+### Пример использования
+~~~
+res = gr_trapz(hfd.grid**2, rc=1.0, hfd)
+~~~
+"""
+    r, w, h = hfd.grid, hfd.weights, hfd.h
+    nc = _get_nc(rc, r)
+    return sc.trapz(f[:nc]*w[:nc])*h
