@@ -19,8 +19,8 @@ __doc__ = """##dirac_parse.py
 
 ### dirac_total_energies(dirac_out)
 
-Возвращает кортеж из списка полных энергий на каждой итерации для потока dirac_out
-и приращений энергии на каждой итерации.
+Возвращает кортеж из списка полных энергий на каждой итерации для потока
+dirac_out и приращений энергии на каждой итерации.
 """
 
 
@@ -48,5 +48,30 @@ def dirac_total_energies(dirac_out):
             ens += [float(line.split()[2])]
         elif "** Exit" in line:
             return ens, [0] + [ens[i] - ens[i-1] for i in xrange(1, len(ens))]
+
+    raise InvalidDiracOutput()
+
+
+def dirac_orbital_energies(dirac_out, orbenmax=1e15):
+    try:
+        _wait_for_str(dirac_out, "* Vector print *")
+        _wait_for_str(dirac_out, "***")
+    except InvalidDiracOutput:
+        _wait_for_str(dirac_out, "population analysis *")
+        _wait_for_str(dirac_out, "***")
+    res = {}
+    for line in dirac_out:
+        if "eigenvalue" in line:
+            aux = line.split(':')
+            aux[1] = aux[1].replace('D', 'e')
+            num, en = int(aux[0].split('.')[-1]), float(aux[1])
+            print("eig parsing")
+            print(num, en)
+            if (en < orbenmax):
+                res[num] = en
+            else:
+                return res
+        elif "*******************************" in line:
+            return res
 
     raise InvalidDiracOutput()
