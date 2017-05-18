@@ -14,13 +14,13 @@ def parse_prop_file(pfile):
 
 
 try:
-    prop_path, dump_file = sys.argv[1]
+    prop_path, dump_file = sys.argv[1:]
 except Exception:
     sys.stderr.write("""\
 Usage:
     {} folder dump
 folder is  folder of OneProp output (log/JReduced0.55 for example)\n
-dump is dump file with props""".format(sys.argv[0]))
+dump is dump file with props\n""".format(sys.argv[0]))
 
     sys.exit(1)
 
@@ -32,5 +32,4 @@ for prop_fname in glob.glob(prop_path + '/' + prop_prefix + '*'):
 
 dumpf = open(dump_file, 'w')
 cPickle.dump(props, dumpf)
-
 print props

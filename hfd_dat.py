@@ -100,7 +100,7 @@ Methods and Variables:
                 break
             ns += 1
         if not ok:
-            raise ValueError
+            raise ValueError("{} not in {}".format(orb_spec,self.filename))
         return self.getorb_by_number(ns)
 
     def occ(self, orb_spec):

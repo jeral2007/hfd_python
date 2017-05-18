@@ -36,12 +36,15 @@ def max_even_distrib(N, k):
 
 def display_seq(seq):
     symb = {True: "X", False: "."}
-    print("".join([symb[i in seq] for i in range(seq[-1]+1)]))
+    print("".join([symb[i in seq] for i in range(seq[-1]-1)])+"|X")
 
 
 for seq in max_even_distrib(8, 3):
     display_seq(seq)
-print "12"
+print "-"*12
+for seq in max_even_distrib(8, 5):
+    display_seq(seq)
+print "-"*12
 for seq in max_even_distrib(16, 3):
     display_seq(seq)
 print("!!!!!!!!!!!!!!!!!!!!!! ")

@@ -5,11 +5,10 @@ from source_hfd_python.hfd_dat import Hfd
 from source_hfd_python.makebas import Basis, ljblocks
 from source_hfd_python.atom_strings import str2nlj
 import sys
-from scipy.linalg import inv
 import scipy as sc
 import source_hfd_python.hfd_in_out as hio
 import source_hfd_python.electron_integrals as el
-
+# Forward and back
 
 class ArgSortError(Exception):
     pass
@@ -26,6 +25,7 @@ def argsort(lst, cmp=None, key=None, reverse=False):
     else:
         raise ArgSortError("argsort called with argcmp and argkey together")
     return [p[0] for p in aux]
+
 
 basfile, rc, corbs = sys.argv[1], float(sys.argv[2]), sys.argv[3:]
 basis = Basis.load_bas(basfile)
@@ -62,48 +62,47 @@ for lj, orb_names, orbvals, smat in ljblocks(basis, nc):
         exchanges[(corb_str, lj[0], lj[1])] = exmat
         coulumbs[(corb_str, lj[0], lj[1])] = coulmat
 
-#  разложение орбиталей
-coefs = {}
-precoefs = {}
-err = {}
-#######################
+ls = []
+js = []
+mjs = []
+orbns = []
+for lj, orb_names, orbvals, smat in ljblocks(basis, nc):
+    for orbn in orb_names:
+        for mj in sc.arange(-lj[1], lj[1]+1):
+            ls += [lj[0]]
+            js += [lj[1]]
+            mjs += [mj]
+            orbns += [orbn]
 
-for lj, orbnames, orbvals, smat in ljblocks(basis, nc):
-    smat_inv = inv(smat)
-    for orb in orbvals:
-        pb, qb = orb[0:2]
-        for s in vorb_names:
-            n, lv, jv = str2nlj(s)
-            if lv != lj[0] or jv != lj[1]:
+inds = argsort([10000*x+1000*(10-y)+10*int(z[0])+(10-q) for x, y, z, q in
+                zip(ls, js, orbns, mjs)])
+ls = [ls[i] for i in inds]
+js = [js[i] for i in inds]
+mjs = [mjs[i] for i in inds]
+orbns = [orbns[i] for i in inds]
+N = len(ls)
+cshs_file = open('chshs.txt', 'w')
+
+for corb in corbs:
+    chemshift = sc.zeros((N, N))
+    for i in xrange(N):
+        for j in xrange(N):
+            if ls[i] != ls[j] or js[i] != js[j] or mjs[i] != mjs[j]:
                 continue
-            pv, qv, en = hfd[s]
-            precoef = sc.trapz((pv[:nc]*pb[:nc] +
-                                qv[:nc]*qb[:nc]) *
-                               basis.grid[1][:nc])*basis.grid[2]
-            precoefs[s] = precoefs.get(s, []) + [precoef]
-            err[s] = sc.trapz((pv[:nc]**2+qv[:nc]**2)*basis.grid[1][:nc])
-            err[s] *= basis.grid[2]
-    for s in vorb_names:
-        n, lv, jv = str2nlj(s)
-        if lv != lj[0] or jv != lj[1]:
-            continue
-        coefs[s] = sc.dot(smat_inv, precoefs[s])
-        err[s] = (err[s] - sc.dot(coefs[s], precoefs[s]))/err[s]
-        res = "\t".join([s]+map(str, coefs[s])+[str(err[s])])
-        print(res.replace('.', ','))
+            cmat = coulumbs[(corb, ls[i], js[i])]
+            exmat = exchanges[(corb, ls[i], js[i])]
+            orb_names = basis.ljblock[(ls[i], js[i])][0]
 
-# расчет энергий
-print("-"*10)
-for corb_str in corbs:
-    res = 0e0
-    for vorb_str in coefs:
-        lv, jv = str2nlj(vorb_str)[1:]
-        q = [aux['occ'] for aux in orb_prenames
-             if aux['nl']+aux['j'] == vorb_str][0]
-        # порядок матричных элементов задавался порядком orbvals как для
-        # матричных элементов, так и для разложения. Поэтому они согласованны и
-        # можно автомагически:
-        res += q*sc.dot(coefs[vorb_str].T,
-                        sc.dot(coulumbs[corb_str, lv, jv] -
-                               exchanges[corb_str, lv, jv], coefs[vorb_str]))
-    print("{}\t{}".format(corb_str, res).replace('.', ','))
+            mat_i = orb_names.index(orbns[i])
+            mat_j = orb_names.index(orbns[j])
+            chemshift[i, j] = cmat[mat_i, mat_j] - exmat[mat_i, mat_j]
+
+    fmt = "        ".join(['{:.16f}']*N)+"\n"
+    cshs_file.write("""  JRpropertyJML
+title=ljm electron part of {} orbital energy shift
+  dens=total
+  {}
+""".format(corb.replace('/','_'), N))
+
+    for i in xrange(N):
+        cshs_file.write(fmt.format(*chemshift[i, :]))

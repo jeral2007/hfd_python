@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 import sys
 try:
-    file_in, file_out, center_num = sys.argv[1:]
+    file_in, center_num = sys.argv[1:]
     center_num = int(center_num)
 except Exception:
-    sys.stderr('usage: {} in_file out_file number of the center atom\n'.format(
+    sys.stderr.write('usage: {} in_file \
+ number of the center atom\n'.format(
         sys.argv[0]))
+    sys.exit(0)
 
 inf = open(file_in, 'r')
-outf = open(file_out, 'w')
 coords = []
 
 for line in inf:
@@ -24,4 +25,12 @@ for ii in xrange(len(coords)):
         for jj in xrange(3):
             coords[ii][jj] -= coords[center_num][jj]
 
-print(coords)
+coords[center_num][0:3] = [0, 0, 0]
+
+fmt_str = "    {:.14f}" * 3 + "    {}"
+print('$coord')
+
+for c in coords:
+    print(fmt_str.format(*c))
+
+print('$end')

@@ -5,11 +5,12 @@ __doc__ = u"""
 ##список функций
 - hfd_inp
 - orbitals
-## hfd_inp
+## hfd_inp (hfd_inp_std)
 преобразует шаблон для файла _hfd.inp_, сканируя его и подставляя
 вместо !val! соответствующее значение. Так например вызов hfd_inp(ins, q="1.")
-заменит все вхождения строки !q! в потоке ins на 1.
-
+заменит все вхождения строки !q! ({q}) в потоке ins на 1.
+(hfd_inp_std использует стандартный _.format()_ из python и обладает
+большими возможностями)
 *вызов*: hfd_inp(in_stream, \*\*kwargs)
 - in_stream -- поток с шаблоном входного файла hfd.inp
 - **kwargs -- список ключевых аргументов для подстановки в шаблон.
@@ -20,6 +21,23 @@ __doc__ = u"""
 *вызов*: orbs, en = orbitals(in_stream)
 """
 
+
+def hfd_inp_std(in_stream, **kwargs):
+    import re
+    out = ""
+    def aux(match):
+        res = eval(match.group('expr'), {'__builtins__': None}, kwargs)
+        return ("{:"+match.group('fmt')+'}').format(res)
+
+    expr_fmt = re.compile(r'{(?P<expr>[^}:]*):(?P<fmt>[^}]*)}')
+    with open('hfd.inp', 'w') as hfdinp:
+        for line in in_stream:
+            a = re.search(expr_fmt, line)
+            if a is not None:
+                out += expr_fmt.sub(aux, line)
+            else:
+                out += line
+        hfdinp.write(out)
 
 def hfd_inp(in_stream, **kwargs):
     with open('hfd.inp', 'w') as hfdinp:
