@@ -10,6 +10,7 @@ import source_hfd_python.hfd_in_out as hio
 import source_hfd_python.electron_integrals as el
 # Forward and back
 
+
 class ArgSortError(Exception):
     pass
 
@@ -74,12 +75,14 @@ for lj, orb_names, orbvals, smat in ljblocks(basis, nc):
             mjs += [mj]
             orbns += [orbn]
 
-inds = argsort([10000*x+1000*(10-y)+10*int(z[0])+(10-q) for x, y, z, q in
+# l,n, -j, m order
+inds = argsort([100000*x+1000*int(z[0])+100*(10-y)+q for x, y, z, q in
                 zip(ls, js, orbns, mjs)])
 ls = [ls[i] for i in inds]
 js = [js[i] for i in inds]
 mjs = [mjs[i] for i in inds]
 orbns = [orbns[i] for i in inds]
+print(zip(orbns[0:20], mjs[0:20]))
 N = len(ls)
 cshs_file = open('chshs.txt', 'w')
 
@@ -102,7 +105,7 @@ for corb in corbs:
 title=ljm electron part of {} orbital energy shift
   dens=total
   {}
-""".format(corb.replace('/','_'), N))
+""".format(corb.replace('/', '_'), N))
 
     for i in xrange(N):
         cshs_file.write(fmt.format(*chemshift[i, :]))

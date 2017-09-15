@@ -48,36 +48,52 @@ def hfd_inp(in_stream, **kwargs):
                     out = out.replace('!' + k + '!', str(kwargs[k]))
             hfdinp.write(out)
 
+def make_orbitals_parser(fmt):
+    def orbitals(in_stream):
+        st = 0
+        etot_lookup = False
+        res = []
+        for line in in_stream:
+            if '==========' in line:
+                st = 1
+            elif st == 1 and 'Etot =' in line:
+                e_tot = float(line.split()[6])
+                break
+            elif st == 1 and 'ITER' not in line:  #  HFJ branch
+                etot_lookup = True
+                break
+            else:
+                st = 0
 
-def orbitals(in_stream):
-    fmt = ['no', 'nl', 'j', 'occ', 'kp', 'en',
-           'd', 'Rmax', 'Rav', 'Rm']
-    st = 0
-    res = []
-    for line in in_stream:
-        if '==========' in line:
-            st = 1
-        elif st == 1 and 'Etot =' in line:
-            e_tot = float(line.split()[6])
-            break
-        else:
-            st = 0
-    if st == 0:
-        raise TypeError
-    st = 0
-    for line in in_stream:  # count 3 lines
-        if st == 2:
-            break
-        st += 1
-    if st < 2:
-        raise TypeError
-    # end of header
-    for line in in_stream:
-        if '===========' in line:
-            break
-        aux = line.split()
-        aux[2] = aux[2][:-1]
-        aux[3] = float(aux[3][:-1])
-        aux[4:] = [float(x) for x in aux[4:]]
-        res += [dict(zip(fmt, aux))]
-    return (res, e_tot)
+        if st == 0:
+            raise TypeError
+        st = 0
+        for line in in_stream:  # to the end of header
+            if st == 2 and '----' in line:
+                break
+            elif 'nl j' in line:
+                st = 2
+
+        if st < 2:
+            raise TypeError
+        # end of header
+        for line in in_stream:
+            if '==========' in line:
+                break
+            aux = line.split()
+            aux[2] = aux[2][:-1]
+            aux[3] = float(aux[3][:-1])
+            aux[4:] = [float(x) for x in aux[4:]]
+            res += [dict(zip(fmt, aux))]
+
+        if etot_lookup:
+            for line in in_stream:
+                if 'Etot' in line:
+                    e_tot = float(line.split('=')[1])
+                    break
+
+        return (res, e_tot)
+    return orbitals
+
+orbitals = make_orbitals_parser(fmt=['no', 'nl', 'j', 'occ', 'kp', 'en', 'd',
+                                     'Rmax', 'Rav', 'Rm'])

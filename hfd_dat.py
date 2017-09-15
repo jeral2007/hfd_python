@@ -1,4 +1,4 @@
-#coding: utf8
+# coding: utf8
 import orbs_python as o
 import scipy as sc
 __doc__ = """
@@ -100,7 +100,7 @@ Methods and Variables:
                 break
             ns += 1
         if not ok:
-            raise ValueError("{} not in {}".format(orb_spec,self.filename))
+            raise ValueError("{} not in {}".format(orb_spec, self.filename))
         return self.getorb_by_number(ns)
 
     def occ(self, orb_spec):
@@ -142,7 +142,7 @@ def _get_nc(rc, r):
     if rc >= r[-1]:
         return -1
     else:
-        return sc.where(rc<r)[0][0]+1
+        return sc.where(rc < r)[0][0]+1
 
 def gr_trapz(f, hfd, rc=1e15):
     """ Интегрирование на сетке заданной в hfd.dat
@@ -160,3 +160,35 @@ res = gr_trapz(hfd.grid**2, rc=1.0, hfd)
     r, w, h = hfd.grid, hfd.weights, hfd.h
     nc = _get_nc(rc, r)
     return sc.trapz(f[:nc]*w[:nc])*h
+
+
+class Hfj(Hfd):
+    """ master class for processing hfj.dat files
+Usage:
+    hfj_dat = Hfj('hfj.dat', maxii) where the hfj.dat
+    is the actual name of the file of interest, maxii
+    is number of elements in record and equals to 512 by default
+
+Methods and Variables:
+    - self.getorb_by_number(n) returns the radial parts of the
+    large and small components of orbital with number n
+    - self.__getitem__(orb_spec) returns orbital with given specification
+        orbspec
+        for example hfd_dat['5s1/2'] or hfd_dat[(5,0,1)] will return tuple
+        (p, q, en), where p is the large component of 5s1/2 orbital,
+        q is the small component, and en is the orbital energy.
+    - self.__getgrid__() is the method that loads grid and weights from hfd.dat
+    - self.grid is the scipy 1d-array of the nodes of grid
+    - self.h * self.wieghts is the scipy 1d-array of the weights of grid
+    - self.ns is the total number of shells in the hfd.dat file
+    - self.ll[0:self.ns] is the scipy 1d-array
+        of orbital moments of the orbitals
+    - self.jj[0:self.ns] is the scipy 1d-array of
+        the full moments of the orbitals
+    - self.qq[0:self.ns] is the scipy 1d-array of the occupation numbers of
+        the orbitals
+    """
+    def getorb_by_number(self, num):
+        """ see entire class documentation"""
+        p = o.orbs_python.get_pseudo_orb(self.filename, num+1, self.maxii)
+        return (p[:self.imax],  p[self.imax])
