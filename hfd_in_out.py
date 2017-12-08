@@ -71,7 +71,7 @@ def make_orbitals_parser(fmt):
         for line in in_stream:  # to the end of header
             if st == 2 and '----' in line:
                 break
-            elif 'nl j' in line:
+            elif 'nl j' or 'nl  j' in line:
                 st = 2
 
         if st < 2:
@@ -80,18 +80,24 @@ def make_orbitals_parser(fmt):
         for line in in_stream:
             if '==========' in line:
                 break
+            if 'kp' in line:
+                st =3
+                continue
+            if st == 3:
+                st = 2
+                continue
             aux = line.split()
             aux[2] = aux[2][:-1]
-            aux[3] = float(aux[3][:-1])
+            aux[3] = float(aux[3].replace(')',''))
             aux[4:] = [float(x) for x in aux[4:]]
             res += [dict(zip(fmt, aux))]
 
         if etot_lookup:
+            e_tot = 0e0
             for line in in_stream:
                 if 'Etot' in line:
                     e_tot = float(line.split('=')[1])
                     break
-
         return (res, e_tot)
     return orbitals
 
